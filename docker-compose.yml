@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: wimc
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d   # Load the init.sql script at startup
+      - postgres-data:/var/lib/postgresql/data  # Make data persistent
+    ports:
+      - 5432:5432
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    depends_on:
+      - database
+    environment:
+      - DB_USER=admin
+      - DB_PASSWORD=admin
+      - DB_NAME=wimc
+      - DB_HOST=database
+    volumes:
+      - ./backend:/usr/src/app
+    ports:
+      - 5000:5000
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - 3000:3000
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:5000
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+
+volumes:
+  postgres-data:
