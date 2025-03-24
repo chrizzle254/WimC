@@ -4,7 +4,7 @@ function App() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/users') // Backend service
+    fetch('http://localhost:5050/users') // Backend service
       .then((res) => res.json())
       .then((data) => setUsers(data))
       .catch((err) => console.error(err));
