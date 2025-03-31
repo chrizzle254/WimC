@@ -18,3 +18,12 @@ CREATE TABLE bookings (
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (coach_id) REFERENCES users(id)
 );
+
+CREATE TABLE availability (
+    id SERIAL PRIMARY KEY,
+    coach_id INT NOT NULL,
+    day_of_week VARCHAR(10) NOT NULL, -- e.g., "Monday"
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    FOREIGN KEY (coach_id) REFERENCES users(id)
+);

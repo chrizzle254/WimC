@@ -4,7 +4,7 @@ const authMiddleware = require('../middleware/auth');
 const pool = require('../db');
 
 // POST /api/bookings - Create a booking
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/booking', authMiddleware, async (req, res) => {
   const { coach_id, booking_date } = req.body;
 
   try {

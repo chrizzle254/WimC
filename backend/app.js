@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users'); 
+const bookingRoutes = require('./routes/bookings'); 
 const cors = require('cors');
 require('dotenv').config();
 
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
 
 app.use('/api', authRoutes); 
 app.use('/api', userRoutes); 
+app.use('/api', bookingRoutes); 
 
 // Start the server
 const PORT = process.env.PORT || 5050;
