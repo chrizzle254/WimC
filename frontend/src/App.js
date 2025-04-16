@@ -42,7 +42,13 @@ function App() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:5050/users');
+        const token = localStorage.getItem('token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        const response = await fetch('http://localhost:5050/api/users', {
+          headers
+        });
+        
         if (!response.ok) {
           throw new Error('Failed to fetch users');
         }

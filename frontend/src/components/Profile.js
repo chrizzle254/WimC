@@ -6,10 +6,7 @@ const Profile = () => {
   const [userData, setUserData] = useState({
     name: '',
     email: '',
-    role: '',
-    bio: '',
-    phone: '',
-    location: ''
+    role: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -59,7 +56,9 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5050/api/users/${userData.id}`, {
+      const decodedToken = jwtDecode(token);
+      
+      const response = await fetch(`http://localhost:5050/api/users/${decodedToken.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -105,116 +104,89 @@ const Profile = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="profile-form">
-          <div className="form-group">
-            <label htmlFor="name">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={userData.name}
-              onChange={handleChange}
-              disabled={!isEditing}
-              className="form-input"
-            />
+        {!isEditing ? (
+          <div className="profile-info">
+            <div className="info-group">
+              <label>Full Name</label>
+              <div className="info-value">{userData.name}</div>
+            </div>
+            <div className="info-group">
+              <label>Email</label>
+              <div className="info-value">{userData.email}</div>
+            </div>
+            <div className="info-group">
+              <label>Role</label>
+              <div className="info-value">{userData.role}</div>
+            </div>
+            <button
+              type="button"
+              className="edit-button"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Profile
+            </button>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="profile-form">
+            <div className="form-group">
+              <label htmlFor="name">Full Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={userData.name}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="form-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={userData.email}
-              onChange={handleChange}
-              disabled={!isEditing}
-              className="form-input"
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={userData.email}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="form-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <input
-              type="text"
-              id="role"
-              name="role"
-              value={userData.role}
-              disabled
-              className="form-input"
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="role">Role</label>
+              <input
+                type="text"
+                id="role"
+                name="role"
+                value={userData.role}
+                disabled
+                className="form-input"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="bio">Bio</label>
-            <textarea
-              id="bio"
-              name="bio"
-              value={userData.bio}
-              onChange={handleChange}
-              disabled={!isEditing}
-              className="form-input"
-              rows="4"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={userData.phone}
-              onChange={handleChange}
-              disabled={!isEditing}
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="location">Location</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={userData.location}
-              onChange={handleChange}
-              disabled={!isEditing}
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-actions">
-            {!isEditing ? (
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="save-button"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </button>
               <button
                 type="button"
-                className="edit-button"
-                onClick={() => setIsEditing(true)}
+                className="cancel-button"
+                onClick={() => {
+                  setIsEditing(false);
+                  fetchUserData(); // Reset form data
+                }}
               >
-                Edit Profile
+                Cancel
               </button>
-            ) : (
-              <>
-                <button
-                  type="submit"
-                  className="save-button"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  type="button"
-                  className="cancel-button"
-                  onClick={() => {
-                    setIsEditing(false);
-                    fetchUserData(); // Reset form data
-                  }}
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </form>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
