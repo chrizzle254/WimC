@@ -1,15 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 import LoginForm from './components/LoginForm';
 import AuthRoute from './components/AuthRoute';
 import Dashboard from './components/Dashboard';
 import Bookings from './components/Bookings';
+import Profile from './components/Profile';
 import './App.css';
 
 function App() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        setIsAuthenticated(true);
+        setUserRole(decodedToken.role);
+      } catch (err) {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+        setUserRole(null);
+      }
+    }
+  };
+
+  const handleLogin = (role) => {
+    setIsAuthenticated(true);
+    setUserRole(role);
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -30,6 +58,12 @@ function App() {
     fetchUsers();
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setUserRole(null);
+  };
+
   return (
     <Router>
       <div className="app-container">
@@ -39,9 +73,18 @@ function App() {
           </div>
           <div className="nav-links">
             <Link to="/" className="nav-link">Home</Link>
-            <Link to="/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/bookings" className="nav-link">Bookings</Link>
-            <Link to="/login" className="nav-link">Login</Link>
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                <Link to="/bookings" className="nav-link">Bookings</Link>
+                <Link to="/profile" className="nav-link">Profile</Link>
+                <button onClick={handleLogout} className="nav-link logout-button">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="nav-link">Login</Link>
+            )}
           </div>
         </nav>
 
@@ -74,7 +117,10 @@ function App() {
                 </div>
               </div>
             } />
-            <Route path="/login" element={<LoginForm />} />
+            <Route 
+              path="/login" 
+              element={isAuthenticated ? <Navigate to="/profile" /> : <LoginForm onLogin={handleLogin} />} 
+            />
             <Route
               path="/dashboard"
               element={
@@ -88,6 +134,14 @@ function App() {
               element={
                 <AuthRoute>
                   <Bookings />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AuthRoute>
+                  <Profile />
                 </AuthRoute>
               }
             />

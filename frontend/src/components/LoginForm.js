@@ -3,7 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import './LoginForm.css';
 
-const LoginForm = () => {
+const LoginForm = ({ onLogin }) => {
   const [mode, setMode] = useState('login'); // 'login' or 'register'
   const [formData, setFormData] = useState({
     name: '',
@@ -84,6 +84,7 @@ const LoginForm = () => {
           const decodedToken = jwtDecode(data.token);
           localStorage.setItem('token', data.token);
           setSuccessMessage('Login successful! Redirecting...');
+          onLogin(decodedToken.role);
           setTimeout(() => {
             if (decodedToken.role === 'coach') {
               navigate('/dashboard/coach');
