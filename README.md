@@ -1,88 +1,107 @@
-# **Where is My Coach (WimC)**
+# WimC Application
 
-### **Project Overview**
-WimC is a platform that connects coaches with students, providing a flexible and transparent system for booking lessons. This project is fully containerized using **Docker**.
+This is a full-stack application with a React frontend, Node.js backend, and PostgreSQL database, all containerized using Docker.
 
----
+## Prerequisites
 
-## **Prerequisites**
-Before starting, ensure you have the following installed:
-1. **Docker**: [Download and Install Docker](https://www.docker.com/products/docker-desktop).  
-   - Verify Docker installation:
-     ```bash
-     docker --version
-     ```
+Before you begin, ensure you have the following installed:
+- Docker
+- Docker Compose
+- Node.js (optional, for local development)
 
-2. *(Optional but recommended)* **Postman** or any API testing tool to test backend APIs.
+## Getting Started
 
----
-
-## **Getting Started**
-
-### **1. Clone the Repository**
-Download the project files to your machine:
+### 1. Clone the Repository
 ```bash
-git clone <repository_url>
-cd wimc-project
+git clone <repository-url>
+cd WimC
 ```
 
-### **2. Set Up Environment Variables**
-1. Create a .env file in the project root:
-```touch .env```
-2. Add the following environment variables (modify if needed):
+### 2. Environment Setup
+Create a `.env` file in the root directory with the following variables:
 ```
-DB_USER=myuser
-DB_PASSWORD=mypassword
+DB_USER=admin
+DB_PASSWORD=admin
 DB_NAME=wimc
 DB_HOST=database
-PORT=5000
+REACT_APP_BACKEND_URL=http://localhost:5050
 ```
-### 3. Build and Run the Application
-Run all the services (frontend, backend, and PostgreSQL) with:
-```
+
+### 3. Running the Application
+
+#### Using Docker Compose (Recommended)
+The easiest way to run the entire application is using Docker Compose:
+
+```bash
 docker-compose up --build
 ```
+
 This will:
-- Start the PostgreSQL database.
-- Launch the backend server (Node.js) on http://localhost:5000.
-- Launch the frontend client (React.js) on http://localhost:3000.
+- Start the PostgreSQL database
+- Build and start the backend service
+- Build and start the frontend service
 
-### 4. Verify Setup
-- **Frontend**: Open http://localhost:3000 in your browser, and you should see the app running.
-- **Backend**: Test the backend API using a browser or curl command:
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5050
+- Database: localhost:5432
+
+#### Running Services Individually
+
+##### Database
+```bash
+docker-compose up database
 ```
-curl http://localhost:5000
+
+##### Backend
+```bash
+docker-compose up backend
 ```
-You should see a response like: `Backend is running!`
-- **PostgreSQL**: Connect to the database (e.g., via psql or a database manager). Use the credentials from the .env file.
 
-
-## Managing the Application
-### Start/Stop Services
-- Start all services:
-```docker-compose up```
-- Stop all services:
-```docker-compose down```
-
-### Clean Up (Remove Containers, Images, and Volumes)
-To reset everything:
-```docker-compose down --volumes --rmi all```
-
-## Folder Structure
+##### Frontend
+```bash
+docker-compose up frontend
 ```
-wimc-project/
-├── backend/             # Node.js backend service
-│   ├── index.js         # Entry point for backend API
-│   ├── db.js            # PostgreSQL connection
-│   ├── Dockerfile       # Backend Docker configuration
-│   └── package.json     # Backend dependencies
-├── frontend/            # React.js frontend app
-│   ├── src/             # Source code
-│   ├── Dockerfile       # Frontend Docker configuration
-│   └── package.json     # Frontend dependencies
-├── database/            # PostgreSQL initialization
-│   └── init.sql         # Optional: Pre-create database tables
-├── docker-compose.yml   # Orchestration for all services
-├── .env                 # Environment variables
-└── README.md            # Project setup guide
+
+### 4. Stopping the Application
+To stop all services:
+```bash
+docker-compose down
 ```
+
+To stop and remove volumes (including database data):
+```bash
+docker-compose down -v
+```
+
+## Development
+
+### Local Development
+If you prefer to run services locally without Docker:
+
+#### Backend
+```bash
+cd backend
+npm install
+npm start
+```
+
+#### Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+
+## Troubleshooting
+
+1. If you encounter port conflicts, ensure no other services are running on ports 3000, 5050, or 5432.
+2. If the database connection fails, verify that the database container is running and the credentials in the `.env` file match those in the docker-compose.yml.
+3. For frontend-backend communication issues, ensure the `REACT_APP_BACKEND_URL` in your `.env` file points to the correct backend URL.
+
+## Project Structure
+
+- `frontend/`: React application
+- `backend/`: Node.js backend service
+- `database/`: PostgreSQL database initialization scripts
+- `docker-compose.yml`: Docker configuration for all services
