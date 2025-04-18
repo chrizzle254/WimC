@@ -4,7 +4,7 @@ const authMiddleware = require('../middleware/auth');
 const pool = require('../db');
 
 // POST /api/bookings - Create a booking
-router.post('/booking', authMiddleware, async (req, res) => {
+router.post('/bookings', authMiddleware, async (req, res) => {
   const { coach_id, booking_date } = req.body;
 
   try {
@@ -20,7 +20,7 @@ router.post('/booking', authMiddleware, async (req, res) => {
 });
 
 // GET /api/bookings - Fetch bookings for logged-in user
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/bookings', authMiddleware, async (req, res) => {
   try {
     const bookings = await pool.query(
       'SELECT * FROM bookings WHERE student_id = $1 OR coach_id = $1',
