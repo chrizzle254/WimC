@@ -120,6 +120,7 @@ const LoginForm = ({ onLogin }) => {
             <div className="form-group">
               <label htmlFor="name">Full Name</label>
               <div className="input-wrapper">
+                <div className="input-adornment">👤</div>
                 <input
                   type="text"
                   id="name"
@@ -130,14 +131,13 @@ const LoginForm = ({ onLogin }) => {
                   placeholder="Enter your full name"
                   className="form-input"
                 />
-                <span className="input-icon">👤</span>
               </div>
             </div>
           )}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
             <div className="input-wrapper">
+              <div className="input-adornment">✉️</div>
               <input
                 type="email"
                 id="email"
@@ -148,13 +148,12 @@ const LoginForm = ({ onLogin }) => {
                 placeholder="Enter your email"
                 className="form-input"
               />
-              <span className="input-icon">✉️</span>
             </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
             <div className="input-wrapper">
+              <div className="input-adornment">🔒</div>
               <input
                 type="password"
                 id="password"
@@ -165,7 +164,6 @@ const LoginForm = ({ onLogin }) => {
                 placeholder={mode === 'login' ? 'Enter your password' : 'Create a password'}
                 className="form-input"
               />
-              <span className="input-icon">🔒</span>
             </div>
           </div>
 
@@ -174,6 +172,7 @@ const LoginForm = ({ onLogin }) => {
               <div className="form-group">
                 <label htmlFor="confirmPassword">Confirm Password</label>
                 <div className="input-wrapper">
+                  <div className="input-adornment">🔒</div>
                   <input
                     type="password"
                     id="confirmPassword"
@@ -184,13 +183,13 @@ const LoginForm = ({ onLogin }) => {
                     placeholder="Confirm your password"
                     className="form-input"
                   />
-                  <span className="input-icon">🔒</span>
                 </div>
               </div>
 
               <div className="form-group">
                 <label htmlFor="role">I want to register as</label>
                 <div className="input-wrapper">
+                  <div className="input-adornment">👥</div>
                   <select
                     id="role"
                     name="role"
@@ -201,7 +200,6 @@ const LoginForm = ({ onLogin }) => {
                     <option value="student">Student</option>
                     <option value="coach">Coach</option>
                   </select>
-                  <span className="input-icon">👥</span>
                 </div>
               </div>
             </>
