@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users'); 
 const bookingRoutes = require('./routes/bookings'); 
+const coachAreasRoutes = require('./routes/coach_areas');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 app.use('/api', authRoutes); 
 app.use('/api', userRoutes); 
 app.use('/api', bookingRoutes); 
+app.use('/api', coachAreasRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 5050;

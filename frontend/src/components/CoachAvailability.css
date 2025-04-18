@@ -1,0 +1,143 @@
+.coach-availability-container {
+  display: flex;
+  height: 100vh;
+  padding: 20px;
+  gap: 20px;
+}
+
+.controls-section {
+  flex: 1;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.drawing-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.drawing-controls button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.drawing-controls button.active {
+  background-color: #2563eb;
+  color: white;
+}
+
+.area-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  font-weight: 500;
+}
+
+.form-group select,
+.form-group input {
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.area-form button {
+  padding: 10px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.area-form button:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.map-section {
+  flex: 2;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.areas-list {
+  flex: 1;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.area-card {
+  padding: 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.area-card h4 {
+  margin: 0 0 10px 0;
+  color: #1a1a1a;
+}
+
+.area-card p {
+  margin: 5px 0;
+  color: #4a4a4a;
+}
+
+.area-card button {
+  padding: 8px 15px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.area-card button:hover {
+  background-color: #dc2626;
+}
+
+/* Leaflet map container */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .coach-availability-container {
+    flex-direction: column;
+  }
+
+  .controls-section,
+  .map-section,
+  .areas-list {
+    flex: none;
+    height: 300px;
+  }
+} 

@@ -1,0 +1,25 @@
+.dashboard-container {
+  padding: 20px;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.coach-dashboard,
+.student-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-content {
+  margin-top: 20px;
+}
+
+h1 {
+  color: #1a1a1a;
+  margin-bottom: 20px;
+}
+
+p {
+  color: #4a4a4a;
+  line-height: 1.5;
+} 

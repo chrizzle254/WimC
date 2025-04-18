@@ -1,0 +1,117 @@
+.coach-map-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 20px;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.view-toggle button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-toggle button.active {
+  background-color: #2563eb;
+  color: white;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+}
+
+.map-section {
+  flex: 2;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.list-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.coach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.coach-card {
+  padding: 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.coach-card:hover {
+  background-color: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+.coach-details {
+  flex: 1;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.selected-coach {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.book-button {
+  padding: 10px 20px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.book-button:hover {
+  background-color: #1e40af;
+  transform: translateY(-2px);
+}
+
+/* Leaflet map container */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .content-container {
+    flex-direction: column;
+  }
+
+  .map-section,
+  .list-section,
+  .coach-details {
+    flex: none;
+    height: 300px;
+  }
+} 

@@ -19,6 +19,23 @@ CREATE TABLE bookings (
     FOREIGN KEY (coach_id) REFERENCES users(id)
 );
 
+CREATE TABLE coach_availability_areas (
+    id SERIAL PRIMARY KEY,
+    coach_id INT NOT NULL,
+    area_type VARCHAR(20) CHECK (area_type IN ('circle', 'polygon')) NOT NULL,
+    -- For circle: center_lat and center_lng are the center coordinates, radius is in meters
+    -- For polygon: coordinates is a JSON array of {lat, lng} points
+    center_lat DECIMAL(10, 8),
+    center_lng DECIMAL(11, 8),
+    radius DECIMAL(10, 2),
+    coordinates JSONB,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    day_of_week VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (coach_id) REFERENCES users(id)
+);
+
 CREATE TABLE availability (
     id SERIAL PRIMARY KEY,
     coach_id INT NOT NULL,

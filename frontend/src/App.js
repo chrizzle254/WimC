@@ -6,6 +6,7 @@ import AuthRoute from './components/AuthRoute';
 import Dashboard from './components/Dashboard';
 import Bookings from './components/Bookings';
 import Profile from './components/Profile';
+import CoachMap from './components/CoachMap';
 import './App.css';
 
 function App() {
@@ -83,6 +84,7 @@ function App() {
               <>
                 <Link to="/dashboard" className="nav-link">Dashboard</Link>
                 <Link to="/bookings" className="nav-link">Bookings</Link>
+                <Link to="/coaches" className="nav-link">Find Coaches</Link>
                 <Link to="/profile" className="nav-link">Profile</Link>
                 <button onClick={handleLogout} className="nav-link logout-button">
                   Logout
@@ -140,6 +142,14 @@ function App() {
               element={
                 <AuthRoute>
                   <Bookings />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/coaches"
+              element={
+                <AuthRoute>
+                  <CoachMap />
                 </AuthRoute>
               }
             />
