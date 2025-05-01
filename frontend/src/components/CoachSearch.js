@@ -15,6 +15,7 @@ L.Icon.Default.mergeOptions({
 const CoachSearch = () => {
   const [coaches, setCoaches] = useState([]);
   const [selectedCoach, setSelectedCoach] = useState(null);
+  const [hoveredCoach, setHoveredCoach] = useState(null);
   const [filters, setFilters] = useState({
     location: '',
     date: '',
@@ -93,6 +94,23 @@ const CoachSearch = () => {
     </div>
   );
 
+  // Calculate the center point of a polygon
+  const calculatePolygonCenter = (coordinates) => {
+    if (!coordinates || coordinates.length === 0) return null;
+    
+    // Calculate the centroid
+    let lat = 0;
+    let lng = 0;
+    const numPoints = coordinates.length;
+    
+    coordinates.forEach(coord => {
+      lat += coord[0];
+      lng += coord[1];
+    });
+    
+    return [lat / numPoints, lng / numPoints];
+  };
+
   const CoachCard = ({ coach }) => (
     <div 
       className={`coach-card ${selectedCoach?.id === coach.id ? 'selected' : ''}`}
@@ -131,47 +149,58 @@ const CoachSearch = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             {coaches.map(coach => {
-              if (coach.area_type === 'circle') {
-                return (
-                  <Circle
-                    key={coach.id}
-                    center={[coach.center_lat, coach.center_lng]}
-                    radius={coach.radius}
-                    pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.2 }}
+              const center = coach.area_type === 'circle' 
+                ? [coach.center_lat, coach.center_lng]
+                : calculatePolygonCenter(coach.coordinates); // Calculate center of polygon
+
+              return (
+                <React.Fragment key={coach.id}>
+                  <Marker
+                    position={center}
                     eventHandlers={{
-                      click: () => setSelectedCoach(coach)
+                      click: () => setSelectedCoach(coach),
+                      mouseover: () => setHoveredCoach(coach),
+                      mouseout: () => setHoveredCoach(null)
                     }}
                   >
                     <Popup>
                       <h3>{coach.coach_name}</h3>
                       <p>Available: {coach.day_of_week} {coach.start_time} - {coach.end_time}</p>
-                      <button onClick={() => window.location.href = `/bookings?coach=${coach.coach_id}`}>
+                      <button 
+                        onClick={() => window.location.href = `/bookings?coach=${coach.coach_id}`}
+                        className="book-now-btn"
+                      >
                         Book Now
                       </button>
                     </Popup>
-                  </Circle>
-                );
-              } else if (coach.area_type === 'polygon') {
-                return (
-                  <Polygon
-                    key={coach.id}
-                    positions={coach.coordinates}
-                    pathOptions={{ color: 'blue', fillColor: 'blue', fillOpacity: 0.2 }}
-                    eventHandlers={{
-                      click: () => setSelectedCoach(coach)
-                    }}
-                  >
-                    <Popup>
-                      <h3>{coach.coach_name}</h3>
-                      <p>Available: {coach.day_of_week} {coach.start_time} - {coach.end_time}</p>
-                      <button onClick={() => window.location.href = `/bookings?coach=${coach.coach_id}`}>
-                        Book Now
-                      </button>
-                    </Popup>
-                  </Polygon>
-                );
-              }
-              return null;
+                  </Marker>
+
+                  {hoveredCoach?.id === coach.id && (
+                    coach.area_type === 'circle' ? (
+                      <Circle
+                        center={center}
+                        radius={coach.radius}
+                        pathOptions={{ 
+                          color: '#4A90E2',
+                          fillColor: '#4A90E2',
+                          fillOpacity: 0.2,
+                          weight: 1
+                        }}
+                      />
+                    ) : (
+                      <Polygon
+                        positions={coach.coordinates}
+                        pathOptions={{ 
+                          color: '#4A90E2',
+                          fillColor: '#4A90E2',
+                          fillOpacity: 0.2,
+                          weight: 1
+                        }}
+                      />
+                    )
+                  )}
+                </React.Fragment>
+              );
             })}
           </MapContainer>
         </div>
