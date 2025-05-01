@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon } from 'react-leaflet';
+import React, { useState, useEffect, memo, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './CoachSearch.css';
@@ -12,8 +12,97 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Memoized FilterBar component
+const FilterBar = memo(({ filters, onFilterChange, onSearch }) => {
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      onSearch();
+    }
+  };
+
+  return (
+  <div className="filter-bar">
+    <div className="filter-section">
+      <label>Where</label>
+      <input
+        type="text"
+        onKeyPress={handleKeyPress}
+        placeholder="Search locations"
+        value={filters.location}
+        onChange={(e) => onFilterChange('location', e.target.value)}
+      />
+    </div>
+    <div className="filter-section">
+      <label>When</label>
+      <input
+        type="date"
+        value={filters.date}
+        onChange={(e) => onFilterChange('date', e.target.value)}
+      />
+    </div>
+    <div className="filter-section">
+      <label>What</label>
+      <select
+        value={filters.type}
+        onChange={(e) => onFilterChange('type', e.target.value)}
+      >
+        <option value="">All Lessons</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+    <div className="filter-section">
+      <label>How Many</label>
+      <select
+        value={filters.participants}
+        onChange={(e) => onFilterChange('participants', e.target.value)}
+      >
+        <option value="1">1 Person</option>
+        <option value="2">2 People</option>
+        <option value="3">3 People</option>
+        <option value="4">4+ People</option>
+      </select>
+    </div>
+    <div className="filter-section search-button-container">
+      <button className="search-button" onClick={onSearch}>Search</button>
+    </div>
+  </div>
+  );
+});
+
+// Map event handler component
+const MapEventHandler = ({ onBoundsChange }) => {
+  const map = useMapEvents({
+    load: () => {
+      // Initial bounds
+      const bounds = map.getBounds();
+      console.log('Initial map bounds:', bounds);
+      onBoundsChange(bounds);
+    },
+    moveend: () => {
+      const bounds = map.getBounds();
+      console.log('Map moved, new bounds:', bounds);
+      onBoundsChange(bounds);
+    },
+    zoomend: () => {
+      const bounds = map.getBounds();
+      console.log('Map zoomed, new bounds:', bounds);
+      onBoundsChange(bounds);
+    }
+  });
+  return null;
+};
+
 const CoachSearch = () => {
-  const [coaches, setCoaches] = useState([]);
+  const mapRef = React.useRef();
+  const [mapCenter, setMapCenter] = useState([51.505, -0.09]);
+  const [mapZoom, setMapZoom] = useState(13);
+  const [currentBounds, setCurrentBounds] = useState(null);
+  const [allCoaches, setAllCoaches] = useState([]);
+  const [filteredCoaches, setFilteredCoaches] = useState([]);
+
+
   const [selectedCoach, setSelectedCoach] = useState(null);
   const [hoveredCoach, setHoveredCoach] = useState(null);
   const [filters, setFilters] = useState({
@@ -23,16 +112,157 @@ const CoachSearch = () => {
     participants: 1
   });
 
+  // Fetch all coaches on initial load
   useEffect(() => {
     fetchCoaches();
-  }, [filters]);
+  }, []);
+
+  const isPointInBounds = useCallback((point, bounds) => {
+    if (!point || !bounds || !Array.isArray(point) || point.length !== 2) return false;
+    
+    const [lat, lng] = point;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return false;
+
+    const north = bounds.getNorth();
+    const south = bounds.getSouth();
+    const east = bounds.getEast();
+    const west = bounds.getWest();
+
+    const isInBounds = lat >= south && lat <= north && lng >= west && lng <= east;
+    console.log('Point in bounds?', isInBounds, { point, bounds: { north, south, east, west } });
+    return isInBounds;
+  }, []);
+
+  const filterCoaches = useCallback((coaches, bounds) => {
+    console.log('Filtering coaches:', {
+      totalCoaches: coaches.length,
+      hasBounds: !!bounds
+    });
+
+    let filtered = [...coaches];
+
+    // Filter by map bounds
+    if (bounds) {
+      console.log('Before bounds filter:', filtered.length, 'coaches');
+      filtered = filtered.filter(coach => {
+        try {
+          const coachPos = coach.area_type === 'circle'
+            ? [coach.center_lat, coach.center_lng]
+            : calculatePolygonCenter(coach.coordinates);
+          return coachPos && isPointInBounds(coachPos, bounds);
+        } catch (error) {
+          console.error('Error filtering coach:', error, coach);
+          return false;
+        }
+      });
+      console.log('After bounds filter:', filtered.length, 'coaches');
+    }
+
+    // Filter by date/day
+    if (filters.date) {
+      filtered = filtered.filter(coach => {
+        return coach.available_dates.some(date => date === filters.date);
+      });
+    }
+
+    // Filter by lesson type
+    if (filters.lessonType) {
+      filtered = filtered.filter(coach => coach.lesson_types.includes(filters.lessonType));
+    }
+
+    // Filter by number of participants
+    if (filters.participants) {
+      filtered = filtered.filter(coach => {
+        return coach.max_participants >= parseInt(filters.participants);
+      });
+    }
+
+    setFilteredCoaches(filtered);
+    return filtered;
+  }, [filters, isPointInBounds]);
+
+  // Update filtered coaches when bounds change
+  useEffect(() => {
+    if (currentBounds && currentBounds.isValid()) {
+      filterCoaches(allCoaches, currentBounds);
+    }
+  }, [currentBounds, allCoaches, filterCoaches]);
+
+  const handleSearch = async () => {
+    if (filters.location) {
+      await geocodeLocation(filters.location);
+    }
+    filterCoaches(allCoaches, currentBounds);
+  };
+
+
+
+  const geocodeLocation = async (location) => {
+    if (!location.trim()) return;
+    
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        const newCenter = [parseFloat(lat), parseFloat(lon)];
+        setMapCenter(newCenter);
+        setMapZoom(13);
+        
+        // Use the ref to update map view without triggering bounds change
+        if (mapRef.current) {
+          mapRef.current.setView(newCenter, 13, { animate: true });
+        }
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+    }
+
+  };
+
+  const isCoachInBounds = (coach, bounds) => {
+    if (!bounds) return true;
+    
+    const coachPos = coach.area_type === 'circle'
+      ? [coach.center_lat, coach.center_lng]
+      : calculatePolygonCenter(coach.coordinates);
+    
+    return coachPos && bounds.contains(coachPos);
+  };
+
+  const handleMapBoundsChange = useCallback((bounds) => {
+    if (!bounds || !bounds.isValid()) return;
+
+    const north = bounds.getNorth();
+    const south = bounds.getSouth();
+    const east = bounds.getEast();
+    const west = bounds.getWest();
+
+    console.log('Map bounds changed:', { north, south, east, west });
+
+    setCurrentBounds({
+      getNorth: () => north,
+      getSouth: () => south,
+      getEast: () => east,
+      getWest: () => west,
+      isValid: () => true
+    });
+
+    // Update filtered coaches immediately
+    const filtered = filterCoaches(allCoaches, bounds);
+    setFilteredCoaches(filtered);
+  }, [allCoaches, filterCoaches]);
 
   const fetchCoaches = async () => {
     try {
       const response = await fetch('http://localhost:5050/api/coach-areas');
       const data = await response.json();
       if (response.ok) {
-        setCoaches(data);
+        setAllCoaches(data);
+        setFilteredCoaches(data);
       } else {
         console.error('Error fetching coaches:', data.message);
       }
@@ -48,67 +278,32 @@ const CoachSearch = () => {
     }));
   };
 
-  const FilterBar = () => (
-    <div className="filter-bar">
-      <div className="filter-section">
-        <label>Where</label>
-        <input
-          type="text"
-          placeholder="Search locations"
-          value={filters.location}
-          onChange={(e) => handleFilterChange('location', e.target.value)}
-        />
-      </div>
-      <div className="filter-section">
-        <label>When</label>
-        <input
-          type="date"
-          value={filters.date}
-          onChange={(e) => handleFilterChange('date', e.target.value)}
-        />
-      </div>
-      <div className="filter-section">
-        <label>What</label>
-        <select
-          value={filters.type}
-          onChange={(e) => handleFilterChange('type', e.target.value)}
-        >
-          <option value="">All Lessons</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-      </div>
-      <div className="filter-section">
-        <label>How Many</label>
-        <select
-          value={filters.participants}
-          onChange={(e) => handleFilterChange('participants', e.target.value)}
-        >
-          <option value="1">1 Person</option>
-          <option value="2">2 People</option>
-          <option value="3">3 People</option>
-          <option value="4">4+ People</option>
-        </select>
-      </div>
-    </div>
-  );
+
 
   // Calculate the center point of a polygon
   const calculatePolygonCenter = (coordinates) => {
-    if (!coordinates || coordinates.length === 0) return null;
+    if (!coordinates || !Array.isArray(coordinates) || coordinates.length === 0) return null;
     
-    // Calculate the centroid
-    let lat = 0;
-    let lng = 0;
-    const numPoints = coordinates.length;
-    
-    coordinates.forEach(coord => {
-      lat += coord[0];
-      lng += coord[1];
-    });
-    
-    return [lat / numPoints, lng / numPoints];
+    try {
+      let lat = 0;
+      let lng = 0;
+      const validCoords = coordinates.filter(coord => 
+        Array.isArray(coord) && coord.length === 2 &&
+        typeof coord[0] === 'number' && typeof coord[1] === 'number'
+      );
+      
+      if (validCoords.length === 0) return null;
+      
+      validCoords.forEach(coord => {
+        lat += coord[0];
+        lng += coord[1];
+      });
+      
+      return [lat / validCoords.length, lng / validCoords.length];
+    } catch (error) {
+      console.error('Error calculating polygon center:', error);
+      return null;
+    }
   };
 
   const CoachCard = ({ coach }) => (
@@ -128,27 +323,33 @@ const CoachSearch = () => {
 
   return (
     <div className="coach-search">
-      <FilterBar />
+      <FilterBar 
+        filters={filters} 
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+      />
       <div className="search-content">
         <div className="coaches-list">
-          <h2>{coaches.length} coaches available</h2>
+          <h2>{filteredCoaches.length} coaches available</h2>
           <div className="coach-cards">
-            {coaches.map(coach => (
+            {filteredCoaches.map(coach => (
               <CoachCard key={coach.id} coach={coach} />
             ))}
           </div>
         </div>
         <div className="map-container">
           <MapContainer
-            center={[51.505, -0.09]}
-            zoom={13}
+            ref={mapRef}
+            center={mapCenter}
+            zoom={mapZoom}
             style={{ height: '100%', width: '100%' }}
           >
+            <MapEventHandler onBoundsChange={handleMapBoundsChange} />
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            {coaches.map(coach => {
+            {filteredCoaches.map(coach => {
               const center = coach.area_type === 'circle' 
                 ? [coach.center_lat, coach.center_lng]
                 : calculatePolygonCenter(coach.coordinates); // Calculate center of polygon

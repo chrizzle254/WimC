@@ -147,3 +147,25 @@
 .book-now-btn:hover {
   background-color: #357ABD;
 }
+
+.search-button-container {
+  display: flex;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.search-button {
+  background-color: #4A90E2;
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  height: 38px;
+  transition: background-color 0.2s ease;
+}
+
+.search-button:hover {
+  background-color: #357ABD;
+}
