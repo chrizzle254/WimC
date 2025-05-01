@@ -6,7 +6,7 @@ import AuthRoute from './components/AuthRoute';
 import Dashboard from './components/Dashboard';
 import Bookings from './components/Bookings';
 import Profile from './components/Profile';
-import CoachMap from './components/CoachMap';
+import CoachSearch from './components/CoachSearch';
 import './App.css';
 
 function App() {
@@ -149,7 +149,7 @@ function App() {
               path="/coaches"
               element={
                 <AuthRoute>
-                  <CoachMap />
+                  <CoachSearch />
                 </AuthRoute>
               }
             />
