@@ -119,17 +119,12 @@ const CoachSearch = () => {
 
   const isPointInBounds = useCallback((point, bounds) => {
     if (!point || !bounds || !Array.isArray(point) || point.length !== 2) return false;
-    
+  
     const [lat, lng] = point;
     if (typeof lat !== 'number' || typeof lng !== 'number') return false;
-
-    const north = bounds.getNorth();
-    const south = bounds.getSouth();
-    const east = bounds.getEast();
-    const west = bounds.getWest();
-
-    const isInBounds = lat >= south && lat <= north && lng >= west && lng <= east;
-    console.log('Point in bounds?', isInBounds, { point, bounds: { north, south, east, west } });
+  
+    const isInBounds = bounds.contains(L.latLng(lat, lng)); 
+    console.log('Bounds type:', currentBounds instanceof L.LatLngBounds);
     return isInBounds;
   }, []);
 
@@ -149,6 +144,7 @@ const CoachSearch = () => {
           const coachPos = coach.area_type === 'circle'
             ? [coach.center_lat, coach.center_lng]
             : calculatePolygonCenter(coach.coordinates);
+          console.log('test:', coach.area_type);
           return coachPos && isPointInBounds(coachPos, bounds);
         } catch (error) {
           console.error('Error filtering coach:', error, coach);
@@ -156,25 +152,6 @@ const CoachSearch = () => {
         }
       });
       console.log('After bounds filter:', filtered.length, 'coaches');
-    }
-
-    // Filter by date/day
-    if (filters.date) {
-      filtered = filtered.filter(coach => {
-        return coach.available_dates.some(date => date === filters.date);
-      });
-    }
-
-    // Filter by lesson type
-    if (filters.lessonType) {
-      filtered = filtered.filter(coach => coach.lesson_types.includes(filters.lessonType));
-    }
-
-    // Filter by number of participants
-    if (filters.participants) {
-      filtered = filtered.filter(coach => {
-        return coach.max_participants >= parseInt(filters.participants);
-      });
     }
 
     setFilteredCoaches(filtered);
@@ -234,7 +211,10 @@ const CoachSearch = () => {
   };
 
   const handleMapBoundsChange = useCallback((bounds) => {
-    if (!bounds || !bounds.isValid()) return;
+    if (!bounds || !bounds.isValid()) {
+      console.log('Invalid bounds:', bounds);
+      return;
+    }
 
     const north = bounds.getNorth();
     const south = bounds.getSouth();
@@ -243,13 +223,15 @@ const CoachSearch = () => {
 
     console.log('Map bounds changed:', { north, south, east, west });
 
-    setCurrentBounds({
+    /*setCurrentBounds({
       getNorth: () => north,
       getSouth: () => south,
       getEast: () => east,
       getWest: () => west,
       isValid: () => true
-    });
+    });*/
+    setCurrentBounds(bounds);
+
 
     // Update filtered coaches immediately
     const filtered = filterCoaches(allCoaches, bounds);
