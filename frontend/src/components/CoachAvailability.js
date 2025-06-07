@@ -22,7 +22,8 @@ const CoachAvailability = () => {
   const [formData, setFormData] = useState({
     day_of_week: 'Monday',
     start_time: '09:00',
-    end_time: '17:00'
+    end_time: '17:00',
+    radius: 1000 // Default radius in meters
   });
 
   useEffect(() => {
@@ -56,7 +57,7 @@ const CoachAvailability = () => {
             setDrawnArea({
               type: 'circle',
               center: [e.latlng.lat, e.latlng.lng],
-              radius: 1000 // Default 1km radius
+              radius: 500 // Default 500m radius
             });
           } else if (drawingMode === 'polygon') {
             const newPoints = [...polygonPoints, [e.latlng.lat, e.latlng.lng]];
@@ -253,6 +254,27 @@ const CoachAvailability = () => {
                 onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
               />
             </div>
+
+            {drawingMode === 'circle' && (
+              <div className="form-group">
+                <label htmlFor="radius">Radius (meters)</label>
+                <input
+                  type="number"
+                  id="radius"
+                  min="100"
+                  max="10000"
+                  value={formData.radius}
+                  onChange={(e) => {
+                    const newRadius = parseInt(e.target.value);
+                    setFormData({ ...formData, radius: newRadius });
+                    setDrawnArea(prev => ({
+                      ...prev,
+                      radius: newRadius
+                    }));
+                  }}
+                />
+              </div>
+            )}
 
             <button type="submit" disabled={!drawnArea}>
               Save Area

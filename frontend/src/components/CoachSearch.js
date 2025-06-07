@@ -117,25 +117,17 @@ const CoachSearch = () => {
     fetchCoaches();
   }, []);
 
-  const isPointInBounds = useCallback((point, bounds) => {
-    if (!point || !bounds || !Array.isArray(point) || point.length !== 2) return false;
-  
-    const [lat, lng] = point;
-    if (typeof lat !== 'number' || typeof lng !== 'number') return false;
-  
-    const isInBounds = bounds.contains(L.latLng(lat, lng)); 
-    return isInBounds;
-  }, []);
-
   const isAreaInBounds = useCallback((coach, bounds) => {
     if (!bounds || !bounds.isValid()) return true;
 
     try {
       if (coach.area_type === 'circle') {
         // For circles, check if any part of the circle intersects with the bounds
+        console.log('Coach asdasdasdasdas:', coach);
+        console.log('Bounds asdasdasdasdas:', bounds);
         const center = L.latLng(coach.center_lat, coach.center_lng);
-        const circle = L.circle(center, { radius: coach.radius });
-        return bounds.intersects(circle.getBounds());
+        const circleBounds = center.toBounds(coach.radius);
+        return bounds.intersects(circleBounds); 
       } else if (coach.area_type === 'polygon') {
         // For polygons, check if any part of the polygon intersects with the bounds
         const polygon = L.polygon(coach.coordinates);
@@ -178,7 +170,7 @@ const CoachSearch = () => {
     }
 
     return filtered;
-  }, [filters, isAreaInBounds]);
+  }, [isAreaInBounds]);
 
   // Update filtered coaches when bounds change
   useEffect(() => {
@@ -228,17 +220,7 @@ const CoachSearch = () => {
     }
 
   };
-
-  const isCoachInBounds = (coach, bounds) => {
-    if (!bounds) return true;
-    
-    const coachPos = coach.area_type === 'circle'
-      ? [coach.center_lat, coach.center_lng]
-      : calculatePolygonCenter(coach.coordinates);
-    
-    return coachPos && bounds.contains(coachPos);
-  };
-
+  
   const handleMapBoundsChange = useCallback((bounds) => {
     if (!bounds || !bounds.isValid()) {
       console.log('Invalid bounds:', bounds);
