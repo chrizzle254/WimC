@@ -124,46 +124,75 @@ const CoachSearch = () => {
     if (typeof lat !== 'number' || typeof lng !== 'number') return false;
   
     const isInBounds = bounds.contains(L.latLng(lat, lng)); 
-    console.log('Bounds type:', currentBounds instanceof L.LatLngBounds);
     return isInBounds;
+  }, []);
+
+  const isAreaInBounds = useCallback((coach, bounds) => {
+    if (!bounds || !bounds.isValid()) return true;
+
+    try {
+      if (coach.area_type === 'circle') {
+        // For circles, check if any part of the circle intersects with the bounds
+        const center = L.latLng(coach.center_lat, coach.center_lng);
+        const circle = L.circle(center, { radius: coach.radius });
+        return bounds.intersects(circle.getBounds());
+      } else if (coach.area_type === 'polygon') {
+        // For polygons, check if any part of the polygon intersects with the bounds
+        const polygon = L.polygon(coach.coordinates);
+        return bounds.intersects(polygon.getBounds());
+      }
+      return true; // If we can't determine the area type, show the coach
+    } catch (error) {
+      console.error('Error checking area bounds:', error, coach);
+      return true; // Show coach if there's an error
+    }
   }, []);
 
   const filterCoaches = useCallback((coaches, bounds) => {
     console.log('Filtering coaches:', {
       totalCoaches: coaches.length,
-      hasBounds: !!bounds
+      hasBounds: bounds,
+      boundsString: bounds?.toString()
     });
 
     let filtered = [...coaches];
 
     // Filter by map bounds
-    if (bounds) {
+    if (bounds && bounds.isValid()) {
       console.log('Before bounds filter:', filtered.length, 'coaches');
       filtered = filtered.filter(coach => {
         try {
-          const coachPos = coach.area_type === 'circle'
-            ? [coach.center_lat, coach.center_lng]
-            : calculatePolygonCenter(coach.coordinates);
-          console.log('test:', coach.area_type);
-          return coachPos && isPointInBounds(coachPos, bounds);
+          const isInBounds = isAreaInBounds(coach, bounds);
+          console.log('Coach bounds check:', { 
+            coach: coach.coach_name, 
+            isInBounds,
+            bounds: bounds.toString()
+          });
+          return isInBounds;
         } catch (error) {
           console.error('Error filtering coach:', error, coach);
-          return false;
+          return true; // Show coach if there's an error
         }
       });
       console.log('After bounds filter:', filtered.length, 'coaches');
     }
 
-    setFilteredCoaches(filtered);
     return filtered;
-  }, [filters, isPointInBounds]);
+  }, [filters, isAreaInBounds]);
 
   // Update filtered coaches when bounds change
   useEffect(() => {
-    if (currentBounds && currentBounds.isValid()) {
-      filterCoaches(allCoaches, currentBounds);
+    if (allCoaches.length > 0) {
+      console.log('Updating filtered coaches:', {
+        allCoachesCount: allCoaches.length,
+        hasBounds: !!currentBounds,
+        boundsString: currentBounds?.toString()
+      });
+      const filtered = filterCoaches(allCoaches, currentBounds);
+      console.log('Setting filtered coaches:', filtered.length);
+      setFilteredCoaches(filtered);
     }
-  }, [currentBounds, allCoaches, filterCoaches]);
+  }, [currentBounds, allCoaches, filterCoaches, filters]);
 
   const handleSearch = async () => {
     if (filters.location) {
@@ -215,34 +244,16 @@ const CoachSearch = () => {
       console.log('Invalid bounds:', bounds);
       return;
     }
-
-    const north = bounds.getNorth();
-    const south = bounds.getSouth();
-    const east = bounds.getEast();
-    const west = bounds.getWest();
-
-    console.log('Map bounds changed:', { north, south, east, west });
-
-    /*setCurrentBounds({
-      getNorth: () => north,
-      getSouth: () => south,
-      getEast: () => east,
-      getWest: () => west,
-      isValid: () => true
-    });*/
+    console.log('Map bounds changed:', bounds.toString());
     setCurrentBounds(bounds);
-
-
-    // Update filtered coaches immediately
-    const filtered = filterCoaches(allCoaches, bounds);
-    setFilteredCoaches(filtered);
-  }, [allCoaches, filterCoaches]);
+  }, []);
 
   const fetchCoaches = async () => {
     try {
       const response = await fetch('http://localhost:5050/api/coach-areas');
       const data = await response.json();
       if (response.ok) {
+        console.log('Fetched coaches:', data);
         setAllCoaches(data);
         setFilteredCoaches(data);
       } else {
