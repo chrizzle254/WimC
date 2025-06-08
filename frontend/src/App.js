@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 import { jwtDecode } from 'jwt-decode';
 import LoginForm from './components/LoginForm';
 import AuthRoute from './components/AuthRoute';
-import Dashboard from './components/Dashboard';
+import ManageOfferings from './components/ManageOfferings';
 import Bookings from './components/Bookings';
 import Profile from './components/Profile';
 import CoachSearch from './components/CoachSearch';
@@ -94,7 +94,7 @@ function App() {
             {isAuthenticated ? (
               <>
                 {userRole === 'coach' && (
-                  <NavLink to="/dashboard" className="nav-link">Manage Offerings</NavLink>
+                  <NavLink to="/offerings" className="nav-link">Manage Offerings</NavLink>
                 )}
                 <NavLink to="/bookings" className="nav-link">Bookings</NavLink>
                 <NavLink to="/profile" className="nav-link">Profile</NavLink>
@@ -116,8 +116,8 @@ function App() {
               element={isAuthenticated ? <Navigate to="/profile" /> : <LoginForm onLogin={handleLogin} />} 
             />
             <Route
-              path="/dashboard"
-              element={<Dashboard />}
+              path="/offerings"
+              element={<ManageOfferings />}
             />
             <Route
               path="/bookings"
