@@ -93,7 +93,9 @@ function App() {
             <NavLink to="/coaches" className="nav-link">Find Coaches</NavLink>
             {isAuthenticated ? (
               <>
-                <NavLink to="/dashboard" className="nav-link">Dashboard</NavLink>
+                {userRole === 'coach' && (
+                  <NavLink to="/dashboard" className="nav-link">Manage Offerings</NavLink>
+                )}
                 <NavLink to="/bookings" className="nav-link">Bookings</NavLink>
                 <NavLink to="/profile" className="nav-link">Profile</NavLink>
                 <button onClick={handleLogout} className="nav-link logout-button">
