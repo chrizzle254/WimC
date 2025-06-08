@@ -86,10 +86,9 @@ const LoginForm = ({ onLogin }) => {
           localStorage.setItem('token', data.token);
           setSuccessMessage('Login successful! Redirecting...');
           onLogin(decodedToken.role);
-          setTimeout(() => {
-            const from = location.state?.from?.pathname || '/';
-            navigate(from);
-          }, 1500);
+
+          // Navigate to coaches page
+          navigate('/coaches');
         } else {
           setSuccessMessage('Registration successful! Please login.');
           setMode('login');

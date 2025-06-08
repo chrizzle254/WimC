@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, useMap, useMap
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './CoachSearch.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BookingModal from './BookingModal';
 
 // Fix for default marker icons in Leaflet
@@ -115,11 +115,22 @@ const CoachSearch = () => {
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedCoachForBooking, setSelectedCoachForBooking] = useState(null);
 
   // Fetch all coaches on initial load
   useEffect(() => {
     fetchCoaches();
+  }, []);
+
+  // Check for pending booking after login
+  useEffect(() => {
+    const pendingBooking = localStorage.getItem('pendingBooking');
+    if (pendingBooking) {
+      const coach = JSON.parse(pendingBooking);
+      setSelectedCoachForBooking(coach);
+      localStorage.removeItem('pendingBooking');
+    }
   }, []);
 
   const isAreaInBounds = useCallback((coach, bounds) => {
@@ -302,7 +313,15 @@ const CoachSearch = () => {
   );
 
   const handleBookNow = (coach) => {
-    setSelectedCoachForBooking(coach);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Store the selected coach in localStorage
+      localStorage.setItem('pendingBooking', JSON.stringify(coach));
+      // Redirect to login
+      navigate('/login');
+    } else {
+      setSelectedCoachForBooking(coach);
+    }
   };
 
   return (
