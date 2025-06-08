@@ -95,6 +95,27 @@ body {
   color: var(--error-color);
 }
 
+.nav-link.active {
+  color: #007bff;
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #007bff;
+  border-radius: 2px;
+}
+
+.nav-logo.active {
+  color: #007bff;
+}
+
 /* Main content */
 .main-content {
   flex: 1;

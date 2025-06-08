@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import LoginForm from './components/LoginForm';
 import AuthRoute from './components/AuthRoute';
@@ -8,6 +8,17 @@ import Bookings from './components/Bookings';
 import Profile from './components/Profile';
 import CoachSearch from './components/CoachSearch';
 import './App.css';
+
+// Create a NavLink component that handles active state
+const NavLink = ({ to, children, className }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  return (
+    <Link to={to} className={`${className} ${isActive ? 'active' : ''}`}>
+      {children}
+    </Link>
+  );
+};
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -76,21 +87,21 @@ function App() {
       <div className="app-container">
         <nav className="navbar">
           <div className="nav-brand">
-            <Link to="/" className="nav-logo">WimC</Link>
+            <NavLink to="/" className="nav-logo">WimC</NavLink>
           </div>
           <div className="nav-links">
-          <Link to="/coaches" className="nav-link">Find Coaches</Link>
+            <NavLink to="/coaches" className="nav-link">Find Coaches</NavLink>
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="nav-link">Dashboard</Link>
-                <Link to="/bookings" className="nav-link">Bookings</Link>
-                <Link to="/profile" className="nav-link">Profile</Link>
+                <NavLink to="/dashboard" className="nav-link">Dashboard</NavLink>
+                <NavLink to="/bookings" className="nav-link">Bookings</NavLink>
+                <NavLink to="/profile" className="nav-link">Profile</NavLink>
                 <button onClick={handleLogout} className="nav-link logout-button">
                   Logout
                 </button>
               </>
             ) : (
-              <Link to="/login" className="nav-link">Login</Link>
+              <NavLink to="/login" className="nav-link">Login</NavLink>
             )}
           </div>
         </nav>
