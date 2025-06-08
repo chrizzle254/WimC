@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, useMap, useMap
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './CoachSearch.css';
+import { useNavigate } from 'react-router-dom';
+import BookingModal from './BookingModal';
 
 // Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -111,6 +113,9 @@ const CoachSearch = () => {
     type: '',
     participants: 1
   });
+
+  const navigate = useNavigate();
+  const [selectedCoachForBooking, setSelectedCoachForBooking] = useState(null);
 
   // Fetch all coaches on initial load
   useEffect(() => {
@@ -296,6 +301,10 @@ const CoachSearch = () => {
     </div>
   );
 
+  const handleBookNow = (coach) => {
+    setSelectedCoachForBooking(coach);
+  };
+
   return (
     <div className="coach-search">
       <FilterBar 
@@ -343,14 +352,19 @@ const CoachSearch = () => {
                     }}
                   >
                     <Popup>
-                      <h3>{coach.coach_name}</h3>
-                      <p>Available: {coach.day_of_week} {coach.start_time} - {coach.end_time}</p>
-                      <button 
-                        onClick={() => window.location.href = `/bookings?coach=${coach.coach_id}`}
-                        className="book-now-btn"
-                      >
-                        Book Now
-                      </button>
+                      <div className="coach-popup">
+                        <h3>{coach.coach_name}</h3>
+                        <p>Available: {coach.day_of_week} {coach.start_time} - {coach.end_time}</p>
+                        <p>Location: {coach.area_type === 'circle' ? 
+                          `Within ${(coach.radius / 1000).toFixed(1)}km radius` : 
+                          'Custom area'}</p>
+                        <button 
+                          onClick={() => handleBookNow(coach)}
+                          className="book-now-btn"
+                        >
+                          Book Now
+                        </button>
+                      </div>
                     </Popup>
                   </Marker>
 
@@ -384,6 +398,11 @@ const CoachSearch = () => {
           </MapContainer>
         </div>
       </div>
+      <BookingModal
+        isOpen={!!selectedCoachForBooking}
+        onClose={() => setSelectedCoachForBooking(null)}
+        coach={selectedCoachForBooking}
+      />
     </div>
   );
 };

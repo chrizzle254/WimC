@@ -72,4 +72,34 @@ router.patch('/bookings/:id/status', authMiddleware, async (req, res) => {
   }
 });
 
+// PATCH /api/bookings/:id/cancel - Cancel a booking
+router.patch('/bookings/:id/cancel', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verify that the logged-in user is either the coach or student for this booking
+    const booking = await pool.query(
+      'SELECT * FROM bookings WHERE id = $1 AND (coach_id = $2 OR student_id = $2)',
+      [id, req.user.id]
+    );
+
+    if (booking.rows.length === 0) {
+      return res.status(403).json({ 
+        message: 'You are not authorized to cancel this booking or booking does not exist'
+      });
+    }
+
+    // Update the booking status to cancelled
+    const updatedBooking = await pool.query(
+      'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
+      ['cancelled', id]
+    );
+
+    res.json(updatedBooking.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

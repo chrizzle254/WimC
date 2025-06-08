@@ -1,44 +1,19 @@
 import React, { useState, useEffect } from 'react';
 
 const Bookings = () => {
-  const [coaches, setCoaches] = useState([]); // List of available coaches
-  const [bookings, setBookings] = useState([]); // Existing bookings for the user
-  const [selectedCoach, setSelectedCoach] = useState(null); // Selected coach for booking
-  const [bookingDate, setBookingDate] = useState(''); // Date for the booking
-  const [message, setMessage] = useState(''); // Error/Success messages
-  const [loading, setLoading] = useState(false); // Loading state for booking creation
-  const [userRole, setUserRole] = useState(null); // Store user's role (coach or student)
+  const [bookings, setBookings] = useState([]);
+  const [message, setMessage] = useState('');
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem('token'); // JWT stored in localStorage
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    fetchCoaches();
     fetchBookings();
-    // Get user role from JWT payload
     const payload = token ? JSON.parse(atob(token.split('.')[1])) : null;
     setUserRole(payload?.role);
   }, [token]);
 
-  // Fetch list of available coaches
-  const fetchCoaches = async () => {
-    try {
-      const response = await fetch('http://localhost:5050/api/coaches', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setCoaches(data);
-      } else {
-        console.error('Error fetching coaches:', data.message);
-      }
-    } catch (err) {
-      console.error('Failed to fetch coaches:', err);
-    }
-  };
-
-  // Fetch current user's bookings
   const fetchBookings = async () => {
     try {
       const response = await fetch('http://localhost:5050/api/bookings', {
@@ -50,14 +25,15 @@ const Bookings = () => {
       if (response.ok) {
         setBookings(data);
       } else {
-        console.error('Error fetching bookings:', data.message);
+        setMessage('Failed to fetch bookings');
       }
     } catch (err) {
-      console.error('Failed to fetch bookings:', err);
+      setMessage('Error loading bookings');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle booking status update (accept/decline)
   const handleBookingStatus = async (bookingId, status) => {
     try {
       const response = await fetch(`http://localhost:5050/api/bookings/${bookingId}/status`, {
@@ -72,161 +48,162 @@ const Bookings = () => {
       const data = await response.json();
       if (response.ok) {
         setMessage(`Booking ${status} successfully!`);
-        fetchBookings(); // Refresh bookings after update
+        fetchBookings();
       } else {
         setMessage(data.message || `Failed to ${status} booking.`);
       }
     } catch (err) {
-      console.error(`Error ${status}ing booking:`, err);
       setMessage('Something went wrong. Please try again.');
     }
   };
 
-  // Handle booking submission
-  const handleBooking = async (e) => {
-    e.preventDefault();
-
-    if (!selectedCoach || !bookingDate) {
-      setMessage('Please select a coach and a date.');
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) {
       return;
     }
 
-    setLoading(true); // Start loading
     try {
-      const response = await fetch('http://localhost:5050/api/bookings', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:5050/api/bookings/${bookingId}/cancel`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          coach_id: selectedCoach,
-          booking_date: bookingDate,
-        }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        setMessage('Booking created successfully!');
-        setSelectedCoach(null);
-        setBookingDate('');
-        fetchBookings(); // Refresh bookings after creating
+        setMessage('Booking cancelled successfully!');
+        fetchBookings();
       } else {
-        setMessage(data.message || 'Failed to create booking.');
+        setMessage(data.message || 'Failed to cancel booking.');
       }
     } catch (err) {
-      console.error('Error creating booking:', err);
       setMessage('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false); // Stop loading
     }
   };
 
-  // Get status color based on booking status
   const getStatusColor = (status) => {
     switch (status) {
-      case 'accepted': return 'green';
-      case 'declined': return 'red';
-      case 'pending': return 'orange';
-      default: return 'black';
+      case 'accepted': return 'text-green-600';
+      case 'declined': return 'text-red-600';
+      case 'pending': return 'text-orange-600';
+      case 'cancelled': return 'text-gray-600';
+      default: return 'text-gray-600';
     }
   };
 
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    const options = { 
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const confirmedBookings = bookings.filter(booking => 
+    booking.status === 'accepted' && new Date(booking.booking_date) > new Date()
+  );
+
+  const pendingBookings = bookings.filter(booking => 
+    booking.status === 'pending' && new Date(booking.booking_date) > new Date()
+  );
+
+  if (loading) {
+    return <div className="container mx-auto p-4">Loading bookings...</div>;
+  }
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Book a Session</h1>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <h1 className="text-2xl font-bold mb-6">My Bookings</h1>
 
       {message && (
-        <div className="mb-4 p-2 bg-blue-100 text-blue-700 rounded">
+        <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-lg">
           {message}
         </div>
       )}
 
-      {userRole === 'student' && (
-        /* Booking Form */
-        <form onSubmit={handleBooking} className="mb-8 space-y-4">
-          <div>
-            <label htmlFor="coach" className="block mb-2">Select a Coach:</label>
-            <select
-              id="coach"
-              className="w-full p-2 border rounded"
-              value={selectedCoach || ''}
-              onChange={(e) => setSelectedCoach(e.target.value)}
-            >
-              <option value="" disabled>
-                -- Choose a Coach --
-              </option>
-              {coaches.map((coach) => (
-                <option key={coach.id} value={coach.id}>
-                  {coach.name} ({coach.email})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="date" className="block mb-2">Booking Date:</label>
-            <input
-              type="datetime-local"
-              id="date"
-              className="w-full p-2 border rounded"
-              value={bookingDate}
-              onChange={(e) => setBookingDate(e.target.value)}
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {loading ? 'Creating Booking...' : 'Book Now'}
-          </button>
-        </form>
-      )}
-
-      {/* Existing Bookings */}
-      <h2 className="text-xl font-bold mb-4">My Bookings</h2>
-      {bookings.length > 0 ? (
-        <div className="space-y-4">
-          {bookings.map((booking) => (
-            <div 
-              key={booking.id} 
-              className="border p-4 rounded shadow-sm"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <p><strong>Student:</strong> {booking.student_name}</p>
-                  <p><strong>Coach:</strong> {booking.coach_name}</p>
-                  <p><strong>Date:</strong> {new Date(booking.booking_date).toLocaleString()}</p>
-                  <p>
-                    <strong>Status:</strong>{' '}
-                    <span style={{ color: getStatusColor(booking.status) }}>
-                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                    </span>
-                  </p>
-                </div>
-                {userRole === 'coach' && booking.status === 'pending' && (
+      {/* Pending Bookings Section */}
+      {userRole === 'coach' && pendingBookings.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-orange-600">Pending Bookings</h2>
+          <div className="space-y-4">
+            {pendingBookings.map((booking) => (
+              <div key={booking.id} className="bg-white p-4 rounded-lg shadow border border-orange-200">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <p className="font-medium">{booking.student_name}</p>
+                    <p className="text-gray-600">{formatDateTime(booking.booking_date)}</p>
+                    <p className="text-sm text-gray-500">
+                      {booking.participants} {booking.participants === 1 ? 'person' : 'people'}
+                    </p>
+                    {booking.location && (
+                      <p className="text-sm text-gray-500">
+                        Location: {booking.location}
+                      </p>
+                    )}
+                  </div>
                   <div className="space-x-2">
                     <button
                       onClick={() => handleBookingStatus(booking.id, 'accepted')}
-                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => handleBookingStatus(booking.id, 'declined')}
-                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
                     >
                       Decline
                     </button>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      ) : (
-        <p>No bookings found.</p>
       )}
+
+      {/* Confirmed Upcoming Bookings Section */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-green-600">Upcoming Bookings</h2>
+        {confirmedBookings.length > 0 ? (
+          <div className="space-y-4">
+            {confirmedBookings.map((booking) => (
+              <div key={booking.id} className="bg-white p-4 rounded-lg shadow border border-green-200">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <p className="font-medium">{booking.student_name}</p>
+                    <p className="text-gray-600">{formatDateTime(booking.booking_date)}</p>
+                    <p className="text-sm text-gray-500">
+                      {booking.participants} {booking.participants === 1 ? 'person' : 'people'}
+                    </p>
+                    {booking.location && (
+                      <p className="text-sm text-gray-500">
+                        Location: {booking.location}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleCancelBooking(booking.id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No upcoming bookings found.</p>
+        )}
+      </div>
     </div>
   );
 };
