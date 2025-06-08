@@ -130,7 +130,7 @@ const Bookings = () => {
       )}
 
       {/* Pending Bookings Section */}
-      {userRole === 'coach' && pendingBookings.length > 0 && (
+      {pendingBookings.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-orange-600">Pending Bookings</h2>
           <div className="space-y-4">
@@ -138,7 +138,9 @@ const Bookings = () => {
               <div key={booking.id} className="bg-white p-4 rounded-lg shadow border border-orange-200">
                 <div className="flex justify-between items-start">
                   <div className="space-y-2">
-                    <p className="font-medium">{booking.student_name}</p>
+                    <p className="font-medium">
+                      {userRole === 'coach' ? booking.student_name : booking.coach_name}
+                    </p>
                     <p className="text-gray-600">{formatDateTime(booking.booking_date)}</p>
                     <p className="text-sm text-gray-500">
                       {booking.participants} {booking.participants === 1 ? 'person' : 'people'}
@@ -150,18 +152,29 @@ const Bookings = () => {
                     )}
                   </div>
                   <div className="space-x-2">
-                    <button
-                      onClick={() => handleBookingStatus(booking.id, 'accepted')}
-                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => handleBookingStatus(booking.id, 'declined')}
-                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                    >
-                      Decline
-                    </button>
+                    {userRole === 'coach' ? (
+                      <>
+                        <button
+                          onClick={() => handleBookingStatus(booking.id, 'accepted')}
+                          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleBookingStatus(booking.id, 'declined')}
+                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                        >
+                          Decline
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => handleCancelBooking(booking.id)}
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                      >
+                        Revoke Request
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -179,7 +192,9 @@ const Bookings = () => {
               <div key={booking.id} className="bg-white p-4 rounded-lg shadow border border-green-200">
                 <div className="flex justify-between items-start">
                   <div className="space-y-2">
-                    <p className="font-medium">{booking.student_name}</p>
+                    <p className="font-medium">
+                      {userRole === 'coach' ? booking.student_name : booking.coach_name}
+                    </p>
                     <p className="text-gray-600">{formatDateTime(booking.booking_date)}</p>
                     <p className="text-sm text-gray-500">
                       {booking.participants} {booking.participants === 1 ? 'person' : 'people'}
