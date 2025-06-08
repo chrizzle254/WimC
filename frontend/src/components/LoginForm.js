@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './LoginForm.css';
 
 const LoginForm = ({ onLogin }) => {
@@ -16,6 +16,7 @@ const LoginForm = ({ onLogin }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Add animation class to form container
@@ -86,11 +87,8 @@ const LoginForm = ({ onLogin }) => {
           setSuccessMessage('Login successful! Redirecting...');
           onLogin(decodedToken.role);
           setTimeout(() => {
-            if (decodedToken.role === 'coach') {
-              navigate('/dashboard/coach');
-            } else if (decodedToken.role === 'student') {
-              navigate('/dashboard/student');
-            }
+            const from = location.state?.from?.pathname || '/';
+            navigate(from);
           }, 1500);
         } else {
           setSuccessMessage('Registration successful! Please login.');

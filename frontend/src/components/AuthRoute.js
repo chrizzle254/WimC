@@ -1,14 +1,15 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 // Higher-order component to protect routes
 const AuthRoute = ({ children }) => {
+  const location = useLocation();
   const token = localStorage.getItem('token');
 
-  // If no token, redirect to the login page
+  // If no token, redirect to the login page with the current location
   if (!token) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   if (token) {
     const decodedToken = jwtDecode(token); // Correct way to call the function
@@ -16,7 +17,7 @@ const AuthRoute = ({ children }) => {
     // Check if the token is expired
     if (decodedToken.exp * 1000 < Date.now()) {
       localStorage.removeItem('token'); // Remove expired token
-      return <Navigate to="/login" />;
+      return <Navigate to="/login" state={{ from: location }} replace />;
     }
   }
 
