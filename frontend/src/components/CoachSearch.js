@@ -327,7 +327,10 @@ const CoachSearch = () => {
             {filteredCoaches.map(coach => {
               const center = coach.area_type === 'circle' 
                 ? [coach.center_lat, coach.center_lng]
-                : calculatePolygonCenter(coach.coordinates); // Calculate center of polygon
+                : calculatePolygonCenter(coach.coordinates);
+
+              const isSelected = selectedCoach?.id === coach.id;
+              const isHovered = hoveredCoach?.id === coach.id;
 
               return (
                 <React.Fragment key={coach.id}>
@@ -351,26 +354,26 @@ const CoachSearch = () => {
                     </Popup>
                   </Marker>
 
-                  {hoveredCoach?.id === coach.id && (
+                  {(isSelected || isHovered) && (
                     coach.area_type === 'circle' ? (
                       <Circle
                         center={center}
                         radius={coach.radius}
                         pathOptions={{ 
-                          color: '#4A90E2',
-                          fillColor: '#4A90E2',
-                          fillOpacity: 0.2,
-                          weight: 1
+                          color: isSelected ? '#2563eb' : '#4A90E2',
+                          fillColor: isSelected ? '#2563eb' : '#4A90E2',
+                          fillOpacity: isSelected ? 0.3 : 0.2,
+                          weight: isSelected ? 2 : 1
                         }}
                       />
                     ) : (
                       <Polygon
                         positions={coach.coordinates}
                         pathOptions={{ 
-                          color: '#4A90E2',
-                          fillColor: '#4A90E2',
-                          fillOpacity: 0.2,
-                          weight: 1
+                          color: isSelected ? '#2563eb' : '#4A90E2',
+                          fillColor: isSelected ? '#2563eb' : '#4A90E2',
+                          fillOpacity: isSelected ? 0.3 : 0.2,
+                          weight: isSelected ? 2 : 1
                         }}
                       />
                     )
