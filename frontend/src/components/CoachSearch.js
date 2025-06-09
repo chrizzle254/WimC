@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -79,22 +79,20 @@ const MapEventHandler = ({ onBoundsChange }) => {
     load: () => {
       // Initial bounds
       const bounds = map.getBounds();
-      console.log('Initial map bounds:', bounds);
       onBoundsChange(bounds);
     },
     moveend: () => {
       const bounds = map.getBounds();
-      console.log('Map moved, new bounds:', bounds);
       onBoundsChange(bounds);
     },
     zoomend: () => {
       const bounds = map.getBounds();
-      console.log('Map zoomed, new bounds:', bounds);
       onBoundsChange(bounds);
     }
   });
   return null;
 };
+
 
 const CoachSearch = () => {
   const mapRef = React.useRef();
@@ -103,6 +101,7 @@ const CoachSearch = () => {
   const [currentBounds, setCurrentBounds] = useState(null);
   const [allCoaches, setAllCoaches] = useState([]);
   const [filteredCoaches, setFilteredCoaches] = useState([]);
+  const markerRefs = useRef({});
 
 
   const [selectedCoach, setSelectedCoach] = useState(null);
@@ -139,8 +138,6 @@ const CoachSearch = () => {
     try {
       if (coach.area_type === 'circle') {
         // For circles, check if any part of the circle intersects with the bounds
-        console.log('Coach asdasdasdasdas:', coach);
-        console.log('Bounds asdasdasdasdas:', bounds);
         const center = L.latLng(coach.center_lat, coach.center_lng);
         const circleBounds = center.toBounds(coach.radius);
         return bounds.intersects(circleBounds); 
@@ -157,32 +154,19 @@ const CoachSearch = () => {
   }, []);
 
   const filterCoaches = useCallback((coaches, bounds) => {
-    console.log('Filtering coaches:', {
-      totalCoaches: coaches.length,
-      hasBounds: bounds,
-      boundsString: bounds?.toString()
-    });
-
     let filtered = [...coaches];
 
     // Filter by map bounds
     if (bounds && bounds.isValid()) {
-      console.log('Before bounds filter:', filtered.length, 'coaches');
       filtered = filtered.filter(coach => {
         try {
           const isInBounds = isAreaInBounds(coach, bounds);
-          console.log('Coach bounds check:', { 
-            coach: coach.coach_name, 
-            isInBounds,
-            bounds: bounds.toString()
-          });
           return isInBounds;
         } catch (error) {
           console.error('Error filtering coach:', error, coach);
           return true; // Show coach if there's an error
         }
       });
-      console.log('After bounds filter:', filtered.length, 'coaches');
     }
 
     return filtered;
@@ -191,13 +175,7 @@ const CoachSearch = () => {
   // Update filtered coaches when bounds change
   useEffect(() => {
     if (allCoaches.length > 0) {
-      console.log('Updating filtered coaches:', {
-        allCoachesCount: allCoaches.length,
-        hasBounds: !!currentBounds,
-        boundsString: currentBounds?.toString()
-      });
       const filtered = filterCoaches(allCoaches, currentBounds);
-      console.log('Setting filtered coaches:', filtered.length);
       setFilteredCoaches(filtered);
     }
   }, [currentBounds, allCoaches, filterCoaches, filters]);
@@ -237,21 +215,20 @@ const CoachSearch = () => {
 
   };
   
-  const handleMapBoundsChange = useCallback((bounds) => {
-    if (!bounds || !bounds.isValid()) {
-      console.log('Invalid bounds:', bounds);
-      return;
+  const handleMapBoundsChange = useCallback((newBounds) => {
+    if (!newBounds?.isValid()) return;
+  
+    // Only update bounds if they differ from the current ones
+    if (!currentBounds || !currentBounds.equals(newBounds)) {
+      setCurrentBounds(newBounds);
     }
-    console.log('Map bounds changed:', bounds.toString());
-    setCurrentBounds(bounds);
-  }, []);
+  }, [currentBounds]);
 
   const fetchCoaches = async () => {
     try {
       const response = await fetch('http://localhost:5050/api/coach-areas');
       const data = await response.json();
       if (response.ok) {
-        console.log('Fetched coaches:', data);
         setAllCoaches(data);
         setFilteredCoaches(data);
       } else {
@@ -300,7 +277,12 @@ const CoachSearch = () => {
   const CoachCard = ({ coach }) => (
     <div 
       className={`coach-card ${selectedCoach?.id === coach.id ? 'selected' : ''}`}
-      onClick={() => setSelectedCoach(coach)}
+      onClick={() => {
+        setSelectedCoach(coach);
+        setTimeout(() => {
+          markerRefs.current[coach.id]?.openPopup();
+        }, 0);
+      }}
     >
       <img src={'https://ui-avatars.com/api/?name=' + encodeURIComponent(coach.coach_name) + '&size=5&background=random'} alt={coach.coach_name} />
       <div className="coach-info">
@@ -364,6 +346,9 @@ const CoachSearch = () => {
                 <React.Fragment key={coach.id}>
                   <Marker
                     position={center}
+                    ref={(el) => {
+                      if (el) markerRefs.current[coach.id] = el;
+                    }}
                     eventHandlers={{
                       click: () => setSelectedCoach(coach),
                       mouseover: () => setHoveredCoach(coach),
